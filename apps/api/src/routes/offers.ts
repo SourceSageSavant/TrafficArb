@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { authenticate } from '../middleware/authenticate.js';
 import { prisma, redis } from '../index.js';
 import { getCache, setCache } from '../lib/redis.js';
-import { formatTon } from '@traffic-arb/shared';
-import type { OfferCategory, OfferDifficulty } from '@traffic-arb/database';
+import { formatTon } from '../lib/shared.js';
+import type { OfferCategory, OfferDifficulty } from '../lib/database.js';
 
 export const offersRouter = Router();
 

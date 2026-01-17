@@ -1,6 +1,6 @@
 import { createHmac } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
-import type { TelegramWebAppInitData } from '@traffic-arb/shared';
+import type { TelegramWebAppInitData } from './shared.js';
 import { env } from './env.js';
 
 const JWT_SECRET = new TextEncoder().encode(env.JWT_SECRET);

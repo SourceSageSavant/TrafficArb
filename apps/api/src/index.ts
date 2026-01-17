@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
-import { PrismaClient } from '@traffic-arb/database';
+import { PrismaClient } from './lib/database.js';
 import { createRedisClient } from './lib/redis.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authRouter } from './routes/auth.js';

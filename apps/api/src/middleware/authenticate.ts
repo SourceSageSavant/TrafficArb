@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { verifyAuthToken } from '../lib/auth.js';
 import { errors } from './errorHandler.js';
 import { prisma } from '../index.js';
-import type { User } from '@traffic-arb/database';
+import type { User } from '../lib/database.js';
 
 // Extend Express Request to include authenticated user
 declare global {

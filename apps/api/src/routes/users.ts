@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { prisma } from '../index.js';
-import { formatTon, getLevelProgress, getXpForNextLevel } from '@traffic-arb/shared';
+import { formatTon, getLevelProgress, getXpForNextLevel } from '../lib/shared.js';
 
 export const usersRouter = Router();
 

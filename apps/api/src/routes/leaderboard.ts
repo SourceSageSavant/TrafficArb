@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, optionalAuth } from '../middleware/authenticate.js';
 import { prisma, redis } from '../index.js';
 import { getCache, setCache } from '../lib/redis.js';
-import { formatTon } from '@traffic-arb/shared';
+import { formatTon } from '../lib/shared.js';
 
 export const leaderboardRouter = Router();
 

@@ -3,7 +3,7 @@ import { createHmac } from 'crypto';
 import { prisma } from '../index.js';
 import { env } from '../lib/env.js';
 import { logger } from '../lib/logger.js';
-import { REFERRAL_RATES, XP_PER_TASK } from '@traffic-arb/shared';
+import { REFERRAL_RATES, XP_PER_TASK } from '../lib/shared.js';
 
 export const postbackRouter = Router();
 

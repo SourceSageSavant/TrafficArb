@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { prisma } from '../index.js';
-import { formatTon } from '@traffic-arb/shared';
+import { formatTon } from '../lib/shared.js';
 import { env } from '../lib/env.js';
 
 export const referralsRouter = Router();

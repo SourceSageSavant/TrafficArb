@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/authenticate.js';
 import { prisma } from '../index.js';
 import { errors } from '../middleware/errorHandler.js';
-import { formatTon, generateSessionId } from '@traffic-arb/shared';
+import { formatTon, generateSessionId } from '../lib/shared.js';
 import { logger } from '../lib/logger.js';
 
 export const tasksRouter = Router();

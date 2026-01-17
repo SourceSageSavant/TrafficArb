@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { authenticate } from '../middleware/authenticate.js';
 import { prisma } from '../index.js';
 import { errors } from '../middleware/errorHandler.js';
-import { formatTon, isValidTonAddress } from '@traffic-arb/shared';
+import { formatTon, isValidTonAddress } from '../lib/shared.js';
 import { logger } from '../lib/logger.js';
 import { env } from '../lib/env.js';
 
