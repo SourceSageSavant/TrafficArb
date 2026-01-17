@@ -1,0 +1,25 @@
+{
+  "name": "traffic-arb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telegram Task Wall - Traffic Arbitrage Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w @traffic-arb/api",
+    "dev:app": "npm run dev -w @traffic-arb/mini-app",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "npm run generate -w @traffic-arb/database",
+    "db:push": "npm run push -w @traffic-arb/database",
+    "db:migrate": "npm run migrate -w @traffic-arb/database",
+    "db:studio": "npm run studio -w @traffic-arb/database"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

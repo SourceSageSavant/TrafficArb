@@ -1,0 +1,434 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum CPAProvider {
+  CPAGRIP
+  OGADS
+  ADGATE
+  CUSTOM // Manual/Affiliate offers added via Admin
+}
+
+enum OfferDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum OfferCategory {
+  APP_INSTALL
+  SURVEY
+  SIGNUP
+  VIDEO
+  GAME
+  SOCIAL
+  OTHER
+}
+
+enum TaskStatus {
+  STARTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  TASK_REWARD
+  REFERRAL_BONUS
+  WITHDRAWAL
+  DAILY_BONUS
+  STREAK_BONUS
+  LEVEL_BONUS
+  ADJUSTMENT
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REJECTED
+}
+
+// =============================================================================
+// USER MODELS
+// =============================================================================
+
+model User {
+  id              String      @id @default(uuid())
+  telegramId      BigInt      @unique @map("telegram_id")
+  username        String?
+  firstName       String?     @map("first_name")
+  lastName        String?     @map("last_name")
+  languageCode    String?     @map("language_code") @db.VarChar(10)
+  countryCode     String?     @map("country_code") @db.VarChar(2)
+  
+  // Referral
+  referrerId      String?     @map("referrer_id")
+  referrer        User?       @relation("ReferralTree", fields: [referrerId], references: [id])
+  referrals       User[]      @relation("ReferralTree")
+  
+  // Gamification
+  level           Int         @default(1)
+  xp              Int         @default(0)
+  
+  // Balance (stored as smallest unit - 9 decimals for TON)
+  balanceNano     BigInt      @default(0) @map("balance_nano")
+  totalEarnedNano BigInt      @default(0) @map("total_earned_nano")
+  
+  // Security
+  riskScore       Int         @default(0) @map("risk_score")
+  status          UserStatus  @default(ACTIVE)
+  
+  // Timestamps
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  lastActiveAt    DateTime    @default(now()) @map("last_active_at")
+  
+  // Relations
+  deviceFingerprints  DeviceFingerprint[]
+  tasks               Task[]
+  transactions        Transaction[]
+  withdrawals         Withdrawal[]
+  achievements        UserAchievement[]
+  dailyStreak         DailyStreak?
+  referralEarnings    ReferralEarning[]   @relation("Referrer")
+  referredEarnings    ReferralEarning[]   @relation("Referred")
+
+  @@map("users")
+}
+
+model DeviceFingerprint {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fingerprintHash String    @map("fingerprint_hash") @db.VarChar(64)
+  ipAddress       String?   @map("ip_address")
+  userAgent       String?   @map("user_agent")
+  
+  // Geo & Security
+  isVpn           Boolean   @default(false) @map("is_vpn")
+  isDatacenter    Boolean   @default(false) @map("is_datacenter")
+  isProxy         Boolean   @default(false) @map("is_proxy")
+  countryCode     String?   @map("country_code") @db.VarChar(2)
+  
+  // Device info
+  platform        String?
+  browser         String?
+  isMobile        Boolean   @default(false) @map("is_mobile")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  tasks           Task[]
+
+  @@index([fingerprintHash])
+  @@index([userId])
+  @@map("device_fingerprints")
+}
+
+// =============================================================================
+// OFFER & TASK MODELS
+// =============================================================================
+
+model Offer {
+  id              String          @id @default(uuid())
+  externalId      String          @map("external_id")
+  provider        CPAProvider
+  
+  // Offer details
+  name            String          @db.VarChar(500)
+  description     String?         @db.Text
+  instructions    String?         @db.Text
+  imageUrl        String?         @map("image_url")
+  trackingUrl     String          @map("tracking_url") @db.Text
+  
+  // Payout (stored in cents and nano)
+  payoutCents     Int             @map("payout_cents") // USD cents
+  payoutNano      BigInt          @map("payout_nano")  // TON nano
+  
+  // Categorization
+  category        OfferCategory   @default(OTHER)
+  difficulty      OfferDifficulty @default(MEDIUM)
+  estimatedMinutes Int?           @map("estimated_minutes")
+  
+  // Targeting
+  countries       String[]        // Array of country codes
+  devices         String[]        // mobile, desktop, tablet
+  
+  // Sybil Resistance Requirements (for CUSTOM offers)
+  requirements    Json?           // e.g., { "premiumOnly": true, "minAccountAgeDays": 30 }
+  
+  // Performance
+  conversionRate  Float?          @map("conversion_rate")
+  completionCount Int             @default(0) @map("completion_count")
+  
+  // Admin controls
+  isActive        Boolean         @default(true) @map("is_active")
+  priority        Int             @default(0)
+  
+  // Timestamps
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  
+  // Relations
+  tasks           Task[]
+
+  @@unique([externalId, provider])
+  @@index([isActive, priority])
+  @@index([provider])
+  @@index([category])
+  @@map("offers")
+}
+
+model Task {
+  id                  String      @id @default(uuid())
+  
+  // References
+  userId              String      @map("user_id")
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offerId             String      @map("offer_id")
+  offer               Offer       @relation(fields: [offerId], references: [id])
+  deviceFingerprintId String?     @map("device_fingerprint_id")
+  deviceFingerprint   DeviceFingerprint? @relation(fields: [deviceFingerprintId], references: [id])
+  
+  // Tracking
+  sessionId           String      @unique @map("session_id") @db.VarChar(64)
+  clickId             String?     @map("click_id") // From CPA network
+  
+  // Status
+  status              TaskStatus  @default(STARTED)
+  payoutNano          BigInt      @map("payout_nano")
+  
+  // Postback data
+  postbackData        Json?       @map("postback_data")
+  postbackReceivedAt  DateTime?   @map("postback_received_at")
+  
+  // Timestamps
+  startedAt           DateTime    @default(now()) @map("started_at")
+  completedAt         DateTime?   @map("completed_at")
+  approvedAt          DateTime?   @map("approved_at")
+  rejectedAt          DateTime?   @map("rejected_at")
+
+  @@index([userId, status])
+  @@index([sessionId])
+  @@index([status, startedAt])
+  @@map("tasks")
+}
+
+// =============================================================================
+// FINANCIAL MODELS
+// =============================================================================
+
+model Transaction {
+  id              String          @id @default(uuid())
+  userId          String          @map("user_id")
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type            TransactionType
+  amountNano      BigInt          @map("amount_nano")
+  balanceAfterNano BigInt         @map("balance_after_nano")
+  
+  // Reference to related entity
+  referenceId     String?         @map("reference_id")
+  referenceType   String?         @map("reference_type") // task, withdrawal, referral, etc.
+  
+  description     String?
+  
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@map("transactions")
+}
+
+model Withdrawal {
+  id              String            @id @default(uuid())
+  userId          String            @map("user_id")
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amountNano      BigInt            @map("amount_nano")
+  walletAddress   String            @map("wallet_address")
+  
+  status          WithdrawalStatus  @default(PENDING)
+  txHash          String?           @map("tx_hash")
+  
+  // Admin
+  adminNotes      String?           @map("admin_notes")
+  processedBy     String?           @map("processed_by")
+  
+  // Timestamps
+  createdAt       DateTime          @default(now()) @map("created_at")
+  processedAt     DateTime?         @map("processed_at")
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@map("withdrawals")
+}
+
+model ReferralEarning {
+  id              String    @id @default(uuid())
+  
+  referrerId      String    @map("referrer_id")
+  referrer        User      @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  
+  referredId      String    @map("referred_id")
+  referred        User      @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+  
+  level           Int       // 1, 2, or 3
+  taskId          String    @map("task_id")
+  
+  amountNano      BigInt    @map("amount_nano")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([referrerId, createdAt])
+  @@map("referral_earnings")
+}
+
+// =============================================================================
+// GAMIFICATION MODELS
+// =============================================================================
+
+model Achievement {
+  id              String    @id @default(uuid())
+  code            String    @unique @db.VarChar(50)
+  name            String    @db.VarChar(100)
+  description     String
+  iconUrl         String?   @map("icon_url")
+  
+  // Requirements
+  requirement     Json      // { type: "tasks_completed", value: 100 }
+  xpReward        Int       @default(0) @map("xp_reward")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id              String      @id @default(uuid())
+  userId          String      @map("user_id")
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId   String      @map("achievement_id")
+  achievement     Achievement @relation(fields: [achievementId], references: [id])
+  
+  unlockedAt      DateTime    @default(now()) @map("unlocked_at")
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model DailyStreak {
+  id              String    @id @default(uuid())
+  userId          String    @unique @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  currentStreak   Int       @default(0) @map("current_streak")
+  longestStreak   Int       @default(0) @map("longest_streak")
+  lastClaimDate   DateTime? @map("last_claim_date") @db.Date
+  
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("daily_streaks")
+}
+
+// =============================================================================
+// ADMIN & SYSTEM MODELS
+// =============================================================================
+
+model AdminUser {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  name            String
+  role            String    @default("admin") // admin, moderator, viewer
+  
+  isActive        Boolean   @default(true) @map("is_active")
+  lastLoginAt     DateTime? @map("last_login_at")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+model SystemConfig {
+  id              String    @id @default(uuid())
+  key             String    @unique @db.VarChar(100)
+  value           Json
+  description     String?
+  
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}
+
+model AuditLog {
+  id              String    @id @default(uuid())
+  
+  actorType       String    @map("actor_type") // admin, system
+  actorId         String?   @map("actor_id")
+  
+  action          String    @db.VarChar(100)
+  entityType      String    @map("entity_type") @db.VarChar(50)
+  entityId        String?   @map("entity_id")
+  
+  details         Json?
+  ipAddress       String?   @map("ip_address")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model FraudAlert {
+  id              String    @id @default(uuid())
+  
+  userId          String    @map("user_id")
+  
+  // Risk assessment
+  riskScore       Int       @map("risk_score")
+  riskLevel       String    @map("risk_level") @db.VarChar(20) // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Alert details
+  alertType       String    @map("alert_type") @db.VarChar(50) // MULTIPLE_DEVICES, RAPID_COMPLETION, etc.
+  flags           String[]
+  details         Json?
+  
+  // Resolution
+  status          String    @default("OPEN") @db.VarChar(20) // OPEN, INVESTIGATING, RESOLVED, DISMISSED
+  resolvedBy      String?   @map("resolved_by")
+  resolvedAt      DateTime? @map("resolved_at")
+  resolutionNotes String?   @map("resolution_notes")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([riskLevel])
+  @@map("fraud_alerts")
+}
