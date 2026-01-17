@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { TelegramUser } from '@traffic-arb/shared';
+import type { TelegramUser } from '@/types/shared';
 
 interface TelegramContextValue {
     webApp: WebApp | null;

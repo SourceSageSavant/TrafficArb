@@ -6,7 +6,10 @@ import { Trophy, Medal, Crown, Star, Loader2 } from 'lucide-react';
 import { useTelegram } from '@/components/providers/TelegramProvider';
 import { useAuth } from '@/context/AuthContext';
 import { useLeaderboard } from '@/hooks/useApi';
-import type { LeaderboardPeriod, LeaderboardType } from '@traffic-arb/shared';
+
+// Inline types to avoid workspace package import issues on Vercel
+type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'alltime';
+type LeaderboardType = 'earnings' | 'tasks' | 'referrals';
 
 const periods: { value: LeaderboardPeriod; label: string }[] = [
     { value: 'daily', label: 'Today' },

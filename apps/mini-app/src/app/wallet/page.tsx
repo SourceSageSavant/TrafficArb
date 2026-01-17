@@ -17,7 +17,7 @@ import {
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { useTelegram } from '@/components/providers/TelegramProvider';
 import { useWalletBalance, useTransactions, useRequestWithdrawal } from '@/hooks/useApi';
-import type { TransactionType } from '@traffic-arb/shared';
+import type { TransactionType } from '@/types/shared';
 
 const transactionIcons: Record<TransactionType, typeof ArrowUpRight> = {
     TASK_REWARD: ArrowDownLeft,

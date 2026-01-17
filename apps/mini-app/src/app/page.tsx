@@ -11,7 +11,7 @@ import { OfferCard } from '@/components/offers/OfferCard';
 import { OfferDetailModal } from '@/components/offers/OfferDetailModal';
 import { StreakBanner } from '@/components/gamification/StreakBanner';
 import { BalanceHeader } from '@/components/common/BalanceHeader';
-import type { OfferListItem } from '@traffic-arb/shared';
+import type { OfferListItem } from '@/types/shared';
 
 const categories = [
     { id: 'all', label: 'All', icon: Sparkles },

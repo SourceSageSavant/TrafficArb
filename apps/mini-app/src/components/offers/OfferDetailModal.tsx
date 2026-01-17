@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, ExternalLink, CheckCircle2, AlertCircle, Zap, Shield, Star } from 'lucide-react';
 import { useTelegram } from '@/components/providers/TelegramProvider';
-import type { OfferListItem } from '@traffic-arb/shared';
+import type { OfferListItem } from '@/types/shared';
 import { useStartTask } from '@/hooks/useApi';
 
 interface OfferDetailModalProps {

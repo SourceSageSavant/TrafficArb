@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Clock, ChevronRight, Zap, CheckCircle } from 'lucide-react';
-import type { OfferListItem } from '@traffic-arb/shared';
+import type { OfferListItem } from '@/types/shared';
 
 interface OfferCardProps {
     offer: OfferListItem;
