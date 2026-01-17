@@ -311,7 +311,7 @@ async function getRecentTaskCompletions(userId: string, minutes: number): Promis
     const tasks = await prisma.task.findMany({
         where: {
             userId,
-            status: 'COMPLETED',
+            status: 'APPROVED',
             completedAt: { gte: since },
         },
     });
@@ -354,7 +354,7 @@ async function detectSuspiciousPatterns(userId: string): Promise<boolean> {
     const recentTasks = await prisma.task.findMany({
         where: {
             userId,
-            status: 'COMPLETED',
+            status: 'APPROVED',
         },
         orderBy: { completedAt: 'desc' },
         take: 20,

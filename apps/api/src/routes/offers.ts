@@ -87,7 +87,7 @@ offersRouter.get('/', authenticate, async (req, res, next) => {
  */
 offersRouter.get('/:id', authenticate, async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
 
         const offer = await prisma.offer.findUnique({
             where: { id },

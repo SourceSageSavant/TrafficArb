@@ -15,7 +15,7 @@ export const tasksRouter = Router();
  */
 tasksRouter.post('/:offerId/start', authenticate, async (req, res, next) => {
     try {
-        const { offerId } = req.params;
+        const offerId = req.params.offerId as string;
         const user = req.user!;
 
         // Get offer
@@ -134,7 +134,7 @@ tasksRouter.get('/', authenticate, async (req, res, next) => {
  */
 tasksRouter.get('/:id', authenticate, async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
         const user = req.user!;
 
         const task = await prisma.task.findFirst({
@@ -146,12 +146,14 @@ tasksRouter.get('/:id', authenticate, async (req, res, next) => {
             throw errors.notFound('Task');
         }
 
+        const taskWithOffer = task as typeof task & { offer: { name: string } };
+
         res.json({
             success: true,
             data: {
                 id: task.id,
                 offerId: task.offerId,
-                offerName: task.offer.name,
+                offerName: taskWithOffer.offer.name,
                 status: task.status,
                 payout: formatTon(task.payoutNano),
                 startedAt: task.startedAt.toISOString(),
