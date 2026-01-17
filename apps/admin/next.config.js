@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    transpilePackages: ['@traffic-arb/shared', '@traffic-arb/database'],
     images: {
         remotePatterns: [
             { protocol: 'https', hostname: '**' },

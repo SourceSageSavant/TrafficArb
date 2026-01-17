@@ -2,7 +2,9 @@
 const nextConfig = {
     reactStrictMode: true,
 
-    // Allow images from external sources
+    // Transpile workspace packages for Vercel deployment
+    transpilePackages: ['@traffic-arb/shared', '@traffic-arb/database'],
+
     images: {
         remotePatterns: [
             {
